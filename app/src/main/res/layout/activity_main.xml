@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="match_parent" android:background="@android:color/holo_red_dark"
     tools:context="com.demoss.mypaint.presentation.MainActivity">
 
     <!--<com.demoss.mypaint.presentation.paint.PaintView
@@ -16,11 +16,11 @@
         android:id="@+id/wv"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/holo_red_dark"
         app:starSharpness="0.7"
         app:starVertexCount="8"
         app:waveColor="@android:color/holo_orange_light"
         app:waveGap="24dp"
-        app:waveStrokeWidth="4dp" />
+        app:waveStrokeWidth="4dp"
+        android:layerType="software" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
