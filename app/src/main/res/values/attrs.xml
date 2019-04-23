@@ -17,4 +17,18 @@
         <item name="starSharpness">0.5</item>
         <item name="waveGap">16dp</item>
     </style>
+
+    <!-- RoundSearchBar -->
+    <attr name="roundSeekBarStyle" format="reference" />
+
+    <declare-styleable name="RoundSeekBarView">
+        <attr name="highlightColor" format="color"/>
+        <attr name="color" format="color"/>
+        <attr name="strokeWidth" format="dimension"/>
+    </declare-styleable>
+
+    <style name="Widget.RoundSeekBar" parent="@android:style/Widget">
+        <item name="highlightColor">@android:color/holo_blue_light</item>
+        <item name="color">@android:color/holo_blue_dark</item>
+    </style>
 </resources>
