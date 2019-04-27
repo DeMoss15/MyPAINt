@@ -5,19 +5,21 @@ import java.lang.Math.*
 import kotlin.math.cos
 import kotlin.math.sin
 
-class TrigonometricalCircle(private val center: PointF, private val radius: Float) {
+class TrigonometricalCircle(val center: PointF, var radius: Float) {
 
-    fun calculateAngle(touchPosition: PointF): Float {
-        return atan2(touchPosition.y - center.y.toDouble(), touchPosition.x - center.x.toDouble()).toFloat()
+    fun calculateAngle(touchPosition: PointF): Double {
+        return atan2(touchPosition.y - center.y.toDouble(), touchPosition.x - center.x.toDouble())
     }
 
-    fun calculateAngleInDegrees(touchPosition: PointF): Float {
-        val degrees = toDegrees(calculateAngle(touchPosition).toDouble()).toFloat()
-        return degrees + if (degrees < 0) 360f else 0f
+    fun calculateAngleInDegrees(touchPosition: PointF): Double {
+        val degrees = toDegrees(calculateAngle(touchPosition))
+        return degrees + if (degrees < 0) 360 else 0
     }
 
-    fun getCoordinatesOnCircleForAngle(angleInRad: Float): PointF = PointF(
-        center.x + radius * cos(angleInRad),
-        center.y + radius * sin(angleInRad)
-    )
+    fun getCoordinatesOnCircleForAngle(angleInRad: Double): PointF = angleInRad.toFloat().run {
+        PointF(
+            center.x + radius * cos(this),
+            center.y + radius * sin(this)
+        )
+    }
 }

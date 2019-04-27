@@ -2,15 +2,15 @@ package com.demoss.mypaint.presentation.searchbar.subview
 
 import android.graphics.*
 import android.graphics.Paint.ANTI_ALIAS_FLAG
-import android.util.Log
 import android.view.MotionEvent
 import android.view.MotionEvent.*
 import androidx.annotation.ColorInt
 import com.demoss.mypaint.presentation.searchbar.Shadow
 import com.demoss.mypaint.presentation.searchbar.TrigonometricalCircle
 import com.demoss.mypaint.presentation.searchbar.subview.abs.SubViewCircle
-import java.lang.Math.*
-import kotlin.math.atan2
+import java.lang.Math.abs
+import java.lang.Math.toRadians
+
 class SeekBar(
     private val token: Token,
     private val width: Float,
@@ -23,6 +23,11 @@ class SeekBar(
     strokeWidth = width
 }) {
 
+    companion object {
+        const val FULL_CIRCLE_ANGLE: Double = 360.0
+        const val HALF_OF_CIRCLE_ANGLE: Double = 180.0
+    }
+
     private val activeShadow: Shadow = Shadow(width / 2f, activeColor)
     private val deactiveShadow: Shadow = Shadow(width / 2f, deactiveColor)
     private val extruderPaint: Paint = Paint(ANTI_ALIAS_FLAG).apply {
@@ -30,14 +35,26 @@ class SeekBar(
         strokeWidth = width
         xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_OUT)
     }
+    private val startAngle: Double = 90.0
+    private val tCircle: TrigonometricalCircle
+    private var minAngleInRad: Double = 1.0
+    private var maxAngleInRad: Double = 1.0
 
     init {
         paint.setShadowLayer(deactiveShadow)
+        tCircle = TrigonometricalCircle(center, radius)
+    }
+
+    private val textPaint = Paint(ANTI_ALIAS_FLAG).apply {
+        color = Color.RED
+        textSize = 32f
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawCircle(center.x, center.y, radius, extruderPaint)
+        val position = (tCircle.calculateAngleInDegrees(token.center) + startAngle) % FULL_CIRCLE_ANGLE
+        canvas.drawText(String.format("%.2f", position),  center.x, center.y, textPaint)
         token.onDraw(canvas)
     }
 
@@ -60,25 +77,35 @@ class SeekBar(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         radius = center.x - width * 1.25f
-        val barCircle = TrigonometricalCircle(center, radius)
-        barCircle.getCoordinatesOnCircleForAngle(toRadians(-START_ANGLE.toDouble()).toFloat()).let {
-            token.center.set(it)
+        // TODO setup start position
+        tCircle.apply {
+            center.set(center)
+            radius = this@SeekBar.radius
+            val paddingAngle = calculateAngleInDegrees(PointF(center.x + radius, center.y + token.radius))
+            minAngleInRad = toRadians(-startAngle + paddingAngle)
+            maxAngleInRad = toRadians(-startAngle - paddingAngle)
+            getCoordinatesOnCircleForAngle(minAngleInRad).let {
+                token.center.set(it)
+            }
         }
     }
 
-    private val START_ANGLE = 90f
-
-    private fun moveToken(pointF: PointF): Unit = with(TrigonometricalCircle(center, radius)) {
+    private fun moveToken(pointF: PointF): Unit = with(tCircle) {
         // TODO code cleanup
-        val currentAngle = (calculateAngleInDegrees(token.center) + START_ANGLE) % 360
-        val newAngle = (calculateAngleInDegrees(pointF) + START_ANGLE) % 360
+        fun getRotatedAngleInDegrees(newPoint: PointF): Double =
+            (calculateAngleInDegrees(newPoint) + startAngle) % FULL_CIRCLE_ANGLE
 
-        if (abs(- newAngle + currentAngle) < 90f) {
-            getCoordinatesOnCircleForAngle(calculateAngle(pointF))
-        } else {
-            val angle = - START_ANGLE + if (currentAngle > 180) -1.0 else 1.0
-            getCoordinatesOnCircleForAngle(toRadians(angle).toFloat())
-        }.let { coordinates ->
+        val currentAngle = getRotatedAngleInDegrees(token.center)
+        val newAngle = getRotatedAngleInDegrees(pointF)
+        val isClipNeeded = abs(newAngle - currentAngle) > HALF_OF_CIRCLE_ANGLE
+
+        getCoordinatesOnCircleForAngle(
+            when {
+                isClipNeeded && currentAngle > HALF_OF_CIRCLE_ANGLE -> maxAngleInRad
+                isClipNeeded && currentAngle < HALF_OF_CIRCLE_ANGLE -> minAngleInRad
+                else -> calculateAngle(pointF)
+            }
+        ).let { coordinates ->
             token.center.set(coordinates)
         }
     }
